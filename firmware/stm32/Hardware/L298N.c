@@ -4,6 +4,11 @@
 #define ZHENG 1
 #define FAN 2
 
+extern uint16_t pump_compare;
+extern uint8_t pump_direct;
+extern uint8_t valve_direct;
+extern uint16_t valve_compare;
+
 uint16_t motor1_ccr;
 uint16_t motor2_ccr;
 uint16_t timvalue = 0;
@@ -86,8 +91,8 @@ void Tim3_Init(void) //定时器初始化函数
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStructure;				//定义结构体变量
 	TIM_TimeBaseInitStructure.TIM_ClockDivision = TIM_CKD_DIV1;     //时钟分频，选择不分频，此参数用于配置滤波器时钟，不影响时基单元功能
 	TIM_TimeBaseInitStructure.TIM_CounterMode = TIM_CounterMode_Up; //计数器模式，选择向上计数
-	TIM_TimeBaseInitStructure.TIM_Period = 10000 - 1;					//计数周期，即ARR的值
-	TIM_TimeBaseInitStructure.TIM_Prescaler = 7200 - 1;				//预分频器，即PSC的值
+	TIM_TimeBaseInitStructure.TIM_Period = 5 - 1;					//计数周期，即ARR的值
+	TIM_TimeBaseInitStructure.TIM_Prescaler = 72 - 1;				//预分频器，即PSC的值
 	TIM_TimeBaseInitStructure.TIM_RepetitionCounter = 0;            //重复计数器，高级定时器才会用到
 	TIM_TimeBaseInit(TIM3, &TIM_TimeBaseInitStructure);             //将结构体变量交给TIM_TimeBaseInit，配置TIM2的时基单元
 	
@@ -111,7 +116,7 @@ void Tim3_Init(void) //定时器初始化函数
 	NVIC_InitStructure.NVIC_IRQChannel = TIM3_IRQn;				//选择配置NVIC的TIM2线
 	NVIC_InitStructure.NVIC_IRQChannelCmd = ENABLE;				//指定NVIC线路使能
 	NVIC_InitStructure.NVIC_IRQChannelPreemptionPriority = 3;	//指定NVIC线路的抢占优先级为3
-	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 1;			//指定NVIC线路的响应优先级为1
+	NVIC_InitStructure.NVIC_IRQChannelSubPriority = 3;			//指定NVIC线路的响应优先级为1
 	NVIC_Init(&NVIC_InitStructure);								//将结构体变量交给NVIC_Init，配置NVIC外设
 	
 	/*TIM使能*/
@@ -183,10 +188,32 @@ void TIM3_IRQHandler(void) //中断函数
     }
 }
 
+// Feature functions
+
 void L298N_Init()
 {
     L298N_GPIO_Init();
     Tim3_Init();
     L298N_ConfigRotateDirect(OFF, OFF);
     L298N_SetCompare(0, 0);
+}
+
+//Valve settings
+
+void valve_set(uint8_t direct, uint16_t speed)
+{
+	valve_direct = direct;
+	valve_compare = speed;
+	//设置阀门和水泵的方向和速度
+	L298N_ConfigRotateDirect(valve_direct, pump_direct);
+	L298N_SetCompare(valve_compare, pump_compare);
+}
+
+void pump_set(uint8_t direct, uint16_t speed)
+{
+	pump_direct = direct;
+	pump_compare = speed;
+	//设置阀门和水泵的方向和速度
+	L298N_ConfigRotateDirect(valve_direct, pump_direct);
+	L298N_SetCompare(valve_compare, pump_compare);
 }

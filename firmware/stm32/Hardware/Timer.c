@@ -1,13 +1,14 @@
 #include "stm32f10x.h"                  // Device header
 #include "Timer.h"
 
-uint8_t tim1_heartbeats = 0; //计时器1的心跳拍数，每100ms自增1 
+uint16_t tim4_heartbeats = 0; //计时器1的心跳拍数，每100ms自增1 
 
 /**
   * 函    数：定时中断初始化
   * 参    数：无
   * 返 回 值：无
   */
+
 void Tim4_Init(void)
 {
 	/*开启时钟*/
@@ -56,7 +57,7 @@ void TIM4_IRQHandler(void)
 {
 	if (TIM_GetITStatus(TIM4, TIM_IT_Update) == SET)
 	{
-		tim1_heartbeats++;
+		tim4_heartbeats++;
 		TIM_ClearITPendingBit(TIM4, TIM_IT_Update);
 	}
 }
